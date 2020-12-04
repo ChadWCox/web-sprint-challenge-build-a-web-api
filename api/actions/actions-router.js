@@ -2,14 +2,13 @@
 const express = require('express')
 const router = express.Router()
 const actions = require('./actions-model')
-const projects = require('../projects/projects-model')
 
 
 router.get('/', (req, res) => {
         actions.get()
         .then(act => {
             if (!act.length) {
-            res.status(404).json({message: 'Actions not found'})
+            res.status(404).json([])
             } else {
             res.status(200).json(act)
             } 
@@ -23,7 +22,7 @@ router.get('/:id', (req, res) => {
     const { id } = req.params
     actions.get(id)
     .then(action => {
-        if (!action.length) {
+        if (!action) {
             res.status(404).json({message: `action with id ${id} not found.`})
         } else {
         res.status(200).json(action)
@@ -33,49 +32,41 @@ router.get('/:id', (req, res) => {
     })})
 
 router.post('/', (req, res) => {
-    const body = req.body
-    const { id } = req.body.project_id
-     
-        projects.get(id).then(project => {
-            if (!project.length) {
-                res.status(404).json({ message: `Project with ID ${id} not found.`})
-            } else if (!id || !body.discription || !body.notes) {
-                res.status(400).json({message: 'Project_id, description, and notes are required'})
-            } else {
-                actions.insert(body)
-                res.status(200).json(body)
-            }
-        }).catch(err => {
-            res.status(500).json({ message: err.message })
-        })})
+    const action  = req.body
+    if(!req.body.project_id || !req.body.description || !req.body.notes){
+        res.status(400).json({ errorMessage: 'Project_id, description, and body are required.'} )
+        }
+        actions.insert(action)
+            .then(action => {
+                res.status(201).json(action)
+            })
+            .catch(err => {
+                res.status(500).json({ message: err.message })
+            })    
+        })
+       
 
 router.put('/:id', (req, res) => {
     const { id } = req.params
     const body = req.body
 
-    projects.get(id).then(project => {
-        if (!project.length) {
-            res.status(404).json({ message: `Project with ID ${id} not found.`})
-        } else if (!body.project_id || !body.discription || !body.notes) {
-            res.status(400).json({message: 'Project_id, description, and notes are required'})
-        } else {
-            actions.update(id, body)
-            res.status(200).json(body)
-        }
-    }).catch(err => {
-        res.status(500).json({ message: err.message })
-    })})
+    if (!body.project_id || !body.description || !body.notes ) {
+        res.status(400).json({ message: 'Project_id, description, and body are required.'})
+    } else {
+        actions.update(id, body)
+        .then(updatedAct => {
+            res.status(200).json(updatedAct)
+        }).catch(err => {
+            res.status(500).json({ message: err.message })})
+        }})
 
 router.delete('/:id', (req, res) => {
     const { id } = req.params
-
-    projects.get(id).then(project => {
-        if (!project.length) {
-            res.status(404).json({ message: `Project with ID ${id} not found.`})
-        } else {
-            actions.remove(id)
-            res.status(200).json({ message: `Message with id ${id} deleted.`})
-        }
-    }).catch(err => {
+        actions.remove(id)
+        .then(res => {
+        res.status(200).json({ message: `Message with id ${id} deleted.`})   
+        }).catch(err => {
         res.status(500).json({ message: err.message })
     })})
+
+    module.exports = router
