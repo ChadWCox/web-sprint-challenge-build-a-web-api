@@ -47,4 +47,6 @@ const validateActId = async (req, res, next) => {
     }
 };
 
+
+
 module.exports = { validateAct, validateActId, validatePro, validateProId } 
